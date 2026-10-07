@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}
+Edit Patient - Hospital Management System
+{% endblock %}
+
+{% block content %}
+
+<div class="form-page">
+
+    <div class="form-box">
+
+        <h1>Edit Patient</h1>
+
+        <p>Update the patient details below.</p>
+
+        <form id="patientForm">
+
+            <div class="form-group">
+
+                <label for="name">
+                    Patient Name
+                </label>
+
+                <input
+                    type="text"
+                    id="name"
+                    placeholder="Enter patient name"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="age">
+                    Age
+                </label>
+
+                <input
+                    type="number"
+                    id="age"
+                    placeholder="Enter age"
+                    min="1"
+                    max="120"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="gender">
+                    Gender
+                </label>
+
+                <select id="gender" required>
+
+                    <option value="">
+                        Select Gender
+                    </option>
+
+                    <option value="Male">
+                        Male
+                    </option>
+
+                    <option value="Female">
+                        Female
+                    </option>
+
+                    <option value="Other">
+                        Other
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="contact">
+                    Contact
+                </label>
+
+                <input
+                    type="text"
+                    id="contact"
+                    placeholder="Enter 10 digit contact number"
+                    maxlength="10"
+                    required
+                >
+
+            </div>
+
+
+            <div id="message"></div>
+
+
+            <div class="form-buttons">
+
+                <button type="submit">
+                    Update Patient
+                </button>
+
+                <button
+                    type="button"
+                    class="cancel-button"
+                    onclick="goBack()">
+
+                    Cancel
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const token =
+    localStorage.getItem("access_token");
+
+
+// Check login
+if (!token) {
+
+    window.location.href = "/login";
+
+}
+
+
+// Get patient ID from URL
+const patientId =
+    window.location.pathname.split("/")[2];
+
+
+// Load existing patient data
+async function loadPatient() {
+
+    try {
+
+        const response = await fetch(
+            "/patients/" + patientId,
+            {
+                method: "GET",
+
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            showMessage(
+                data.message ||
+                "Patient not found.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        const patient = data.data;
+
+
+        document.getElementById("name").value =
+            patient.name;
+
+        document.getElementById("age").value =
+            patient.age;
+
+        document.getElementById("gender").value =
+            patient.gender;
+
+        document.getElementById("contact").value =
+            patient.contact;
+
+
+    } catch (error) {
+
+        showMessage(
+            "Unable to connect to server.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// Update patient
+document.getElementById("patientForm")
+    .addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            const name =
+                document.getElementById("name")
+                .value.trim();
+
+            const age =
+                document.getElementById("age")
+                .value;
+
+            const gender =
+                document.getElementById("gender")
+                .value;
+
+            const contact =
+                document.getElementById("contact")
+                .value.trim();
+
+
+            if (!name || !age || !gender || !contact) {
+
+                showMessage(
+                    "Please fill all fields.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (!/^[0-9]{10}$/.test(contact)) {
+
+                showMessage(
+                    "Contact must contain exactly 10 digits.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                const response = await fetch(
+                    "/patients/" + patientId,
+                    {
+                        method: "PUT",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                            "Authorization":
+                                "Bearer " + token
+                        },
+
+                        body: JSON.stringify({
+
+                            name: name,
+
+                            age: Number(age),
+
+                            gender: gender,
+
+                            contact: contact
+
+                        })
+                    }
+                );
+
+
+                const data =
+                    await response.json();
+
+
+                if (response.ok) {
+
+                    showMessage(
+                        "Patient updated successfully!",
+                        "success"
+                    );
+
+
+                    setTimeout(function() {
+
+                        window.location.href =
+                            "/patients-page";
+
+                    }, 1000);
+
+
+                } else {
+
+                    showMessage(
+                        data.message ||
+                        "Unable to update patient.",
+                        "error"
+                    );
+
+                }
+
+
+            } catch (error) {
+
+                showMessage(
+                    "Unable to connect to server.",
+                    "error"
+                );
+
+            }
+
+        }
+    );
+
+
+// Back button
+function goBack() {
+
+    window.location.href =
+        "/patients-page";
+
+}
+
+
+// Message
+function showMessage(message, type) {
+
+    const messageBox =
+        document.getElementById("message");
+
+    messageBox.innerText = message;
+
+    messageBox.className = type;
+
+}
+
+
+// Load patient when page opens
+loadPatient();
+
+</script>
+
+{% endblock %}

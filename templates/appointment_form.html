@@ -1,0 +1,582 @@
+{% extends "base.html" %}
+
+{% block title %}Add Appointment{% endblock %}
+
+{% block content %}
+
+<div class="form-page">
+
+    <div class="form-box">
+
+        <h1>Add Appointment</h1>
+        <p>Schedule a new patient appointment.</p>
+
+        <form id="appointmentForm">
+
+            <!-- Patient -->
+            <div class="form-group">
+                <label for="patient_id">Patient</label>
+
+                <select id="patient_id" required>
+                    <option value="">Select Patient</option>
+                </select>
+            </div>
+
+
+            <!-- Doctor -->
+            <div class="form-group">
+                <label for="doctor_id">Doctor</label>
+
+                <select id="doctor_id" required>
+                    <option value="">Select Doctor</option>
+                </select>
+            </div>
+
+
+            <!-- Date -->
+            <div class="form-group">
+                <label for="date">Date</label>
+
+                <input
+                    type="datetime-local"
+                    id="date"
+                    required
+                >
+            </div>
+
+
+            <!-- Diagnosis -->
+            <div class="form-group">
+                <label for="diagnosis">Diagnosis</label>
+
+                <input
+                    type="text"
+                    id="diagnosis"
+                    placeholder="Enter diagnosis"
+                    required
+                >
+            </div>
+
+
+            <!-- Status -->
+            <div class="form-group">
+                <label for="status">Status</label>
+
+                <select id="status" required>
+
+                    <option value="Under Treatment">
+                        Under Treatment
+                    </option>
+
+                    <option value="Recovered">
+                        Recovered
+                    </option>
+
+                    <option value="Critical">
+                        Critical
+                    </option>
+
+                </select>
+            </div>
+
+
+            <!-- Message -->
+            <div id="message"></div>
+
+
+            <!-- Buttons -->
+            <div class="form-buttons">
+
+                <button type="submit">
+                    Create Appointment
+                </button>
+
+                <button
+                    type="button"
+                    class="cancel-button"
+                    onclick="window.location.href='/appointments-page'"
+                >
+                    Cancel
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", async function () {
+
+    // ------------------------------------
+    // Get login information
+    // ------------------------------------
+
+    const token = localStorage.getItem("access_token");
+    const role = localStorage.getItem("role");
+
+    // ------------------------------------
+    // Check login
+    // ------------------------------------
+
+    if (!token) {
+
+        window.location.href = "/login";
+        return;
+    }
+
+
+    // ------------------------------------
+    // Only admin can create appointment
+    // ------------------------------------
+
+    if (role !== "admin") {
+
+        alert("Only admin can create appointments.");
+
+        window.location.href = "/appointments-page";
+
+        return;
+    }
+
+
+    // ------------------------------------
+    // Get HTML elements
+    // ------------------------------------
+
+    const patientSelect =
+        document.getElementById("patient_id");
+
+    const doctorSelect =
+        document.getElementById("doctor_id");
+
+    const message =
+        document.getElementById("message");
+
+
+    // ------------------------------------
+    // Load Patients
+    // ------------------------------------
+
+    async function loadPatients() {
+
+        try {
+
+            const response = await fetch("/patients", {
+
+                method: "GET",
+
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+
+            });
+
+
+            const data = await response.json();
+
+            console.log("Patients response:", data);
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    data.error ||
+                    "Unable to load patients"
+                );
+
+            }
+
+
+            // Clear existing options
+
+            patientSelect.innerHTML =
+                '<option value="">Select Patient</option>';
+
+
+            // Handle API response
+
+            const patients =
+                Array.isArray(data)
+                    ? data
+                    : data.data || [];
+
+
+            patients.forEach(function (patient) {
+
+                const option =
+                    document.createElement("option");
+
+                option.value = patient.id;
+
+                option.textContent =
+                    patient.name +
+                    " - Age " +
+                    patient.age;
+
+                patientSelect.appendChild(option);
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Patient loading error:",
+                error
+            );
+
+            message.className = "error";
+
+            message.textContent =
+                "Unable to load patients: " +
+                error.message;
+
+        }
+
+    }
+
+
+    // ------------------------------------
+    // Load Doctors
+    // ------------------------------------
+
+    async function loadDoctors() {
+
+        try {
+
+            const response = await fetch("/doctors", {
+
+                method: "GET",
+
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+
+            });
+
+
+            const data = await response.json();
+
+            console.log("Doctors response:", data);
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    data.error ||
+                    "Unable to load doctors"
+                );
+
+            }
+
+
+            // Clear existing options
+
+            doctorSelect.innerHTML =
+                '<option value="">Select Doctor</option>';
+
+
+            // Handle API response
+
+            const doctors =
+                Array.isArray(data)
+                    ? data
+                    : data.data || [];
+
+
+            doctors.forEach(function (doctor) {
+
+                const option =
+                    document.createElement("option");
+
+                option.value = doctor.id;
+
+                option.textContent =
+                    doctor.name +
+                    " - " +
+                    doctor.specialization;
+
+                doctorSelect.appendChild(option);
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Doctor loading error:",
+                error
+            );
+
+            message.className = "error";
+
+            message.textContent =
+                "Unable to load doctors: " +
+                error.message;
+
+        }
+
+    }
+
+
+    // ------------------------------------
+    // Load patients and doctors
+    // ------------------------------------
+
+    await loadPatients();
+
+    await loadDoctors();
+
+
+    // ------------------------------------
+    // Create Appointment
+    // ------------------------------------
+
+    document
+        .getElementById("appointmentForm")
+        .addEventListener("submit", async function (event) {
+
+            event.preventDefault();
+
+
+            // Clear previous message
+
+            message.textContent = "";
+
+            message.className = "";
+
+
+            // --------------------------------
+            // Get form values
+            // --------------------------------
+
+            const patientId =
+                document.getElementById("patient_id").value;
+
+            const doctorId =
+                document.getElementById("doctor_id").value;
+
+            const dateValue =
+                document.getElementById("date").value;
+
+            const diagnosis =
+                document.getElementById("diagnosis").value.trim();
+
+            const status =
+                document.getElementById("status").value;
+
+
+            // --------------------------------
+            // Basic validation
+            // --------------------------------
+
+            if (!patientId) {
+
+                message.className = "error";
+
+                message.textContent =
+                    "Please select a patient.";
+
+                return;
+            }
+
+
+            if (!doctorId) {
+
+                message.className = "error";
+
+                message.textContent =
+                    "Please select a doctor.";
+
+                return;
+            }
+
+
+            if (!dateValue) {
+
+                message.className = "error";
+
+                message.textContent =
+                    "Please select a date.";
+
+                return;
+            }
+
+
+            if (!diagnosis) {
+
+                message.className = "error";
+
+                message.textContent =
+                    "Please enter diagnosis.";
+
+                return;
+            }
+
+
+            // --------------------------------
+            // Convert date
+            // --------------------------------
+
+            // Browser gives:
+            // 2026-10-08T17:01
+            //
+            // Backend expects:
+            // 2026-10-08 17:01:00
+
+            const formattedDate =
+                dateValue.replace("T", " ") + ":00";
+
+
+            // --------------------------------
+            // Create request data
+            // --------------------------------
+
+            const appointmentData = {
+
+                patient_id: parseInt(patientId),
+
+                doctor_id: parseInt(doctorId),
+
+                date: formattedDate,
+
+                diagnosis: diagnosis,
+
+                status: status
+
+            };
+
+
+            console.log(
+                "Sending appointment:",
+                appointmentData
+            );
+
+
+            // --------------------------------
+            // Send POST request
+            // --------------------------------
+
+            try {
+
+                const response =
+                    await fetch("/appointments", {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                            "Authorization":
+                                "Bearer " + token
+
+                        },
+
+                        body:
+                            JSON.stringify(
+                                appointmentData
+                            )
+
+                    });
+
+
+                // Try to read JSON response
+
+                let result;
+
+                try {
+
+                    result =
+                        await response.json();
+
+                } catch {
+
+                    result = {};
+
+                }
+
+
+                console.log(
+                    "Server response:",
+                    result
+                );
+
+
+                // --------------------------------
+                // Successful
+                // --------------------------------
+
+                if (response.ok) {
+
+                    message.className =
+                        "success";
+
+                    message.textContent =
+                        "Appointment created successfully!";
+
+
+                    // Redirect after 1 second
+
+                    setTimeout(function () {
+
+                        window.location.href =
+                            "/appointments-page";
+
+                    }, 1000);
+
+                }
+
+
+                // --------------------------------
+                // Error from backend
+                // --------------------------------
+
+                else {
+
+                    message.className =
+                        "error";
+
+
+                    message.textContent =
+                        result.message ||
+                        result.error ||
+                        "Unable to create appointment. HTTP Status: " +
+                        response.status;
+
+                }
+
+
+            } catch (error) {
+
+                console.error(
+                    "Appointment creation error:",
+                    error
+                );
+
+
+                message.className =
+                    "error";
+
+
+                message.textContent =
+                    "Server connection error: " +
+                    error.message;
+
+            }
+
+        });
+
+});
+
+</script>
+
+{% endblock %}

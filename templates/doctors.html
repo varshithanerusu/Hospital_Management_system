@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}
+Doctors - Hospital Management System
+{% endblock %}
+
+{% block content %}
+
+<div class="patients-page">
+
+    <div class="page-header">
+
+        <div>
+            <h1>Doctors</h1>
+            <p>Manage doctor records</p>
+        </div>
+
+        <button onclick="addDoctor()">
+            + Add Doctor
+        </button>
+
+    </div>
+
+    <div id="message"></div>
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Specialization</th>
+                    <th>Actions</th>
+                </tr>
+
+            </thead>
+
+            <tbody id="doctorsTableBody">
+
+                <tr>
+                    <td colspan="4">
+                        Loading doctors...
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const token =
+    localStorage.getItem("access_token");
+
+
+if (!token) {
+
+    window.location.href = "/login";
+
+}
+
+
+// Load doctors
+async function loadDoctors() {
+
+    try {
+
+        const response = await fetch(
+            "/doctors",
+            {
+                method: "GET",
+
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            showMessage(
+                data.message ||
+                "Unable to load doctors.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        const doctors = data.data;
+
+        const tableBody =
+            document.getElementById(
+                "doctorsTableBody"
+            );
+
+
+        tableBody.innerHTML = "";
+
+
+        if (doctors.length === 0) {
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="4">
+                        No doctors found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+
+        }
+
+
+        doctors.forEach(function(doctor) {
+
+            const row =
+                document.createElement("tr");
+
+
+            row.innerHTML = `
+
+                <td>${doctor.id}</td>
+
+                <td>${doctor.name}</td>
+
+                <td>${doctor.specialization}</td>
+
+                <td>
+
+                    <button
+                        class="view-button"
+                        onclick="viewDoctor(${doctor.id})">
+                        View
+                    </button>
+
+                    <button
+                        class="edit-button"
+                        onclick="editDoctor(${doctor.id})">
+                        Edit
+                    </button>
+
+                    <button
+                        class="delete-button"
+                        onclick="deleteDoctor(${doctor.id})">
+                        Delete
+                    </button>
+
+                </td>
+
+            `;
+
+
+            tableBody.appendChild(row);
+
+        });
+
+
+    } catch (error) {
+
+        showMessage(
+            "Unable to connect to server.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// Add
+function addDoctor() {
+
+    window.location.href =
+        "/doctors/new";
+
+}
+
+
+// View
+function viewDoctor(id) {
+
+    window.location.href =
+        "/doctors/" + id + "/view";
+
+}
+
+
+// Edit
+function editDoctor(id) {
+
+    window.location.href =
+        "/doctors/" + id + "/edit";
+
+}
+
+
+// Delete
+async function deleteDoctor(id) {
+
+    const confirmed = confirm(
+        "Are you sure you want to delete this doctor?"
+    );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const response = await fetch(
+            "/doctors/" + id,
+            {
+                method: "DELETE",
+
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        if (response.ok) {
+
+            showMessage(
+                "Doctor deleted successfully.",
+                "success"
+            );
+
+            loadDoctors();
+
+        } else {
+
+            showMessage(
+                data.message ||
+                "Unable to delete doctor.",
+                "error"
+            );
+
+        }
+
+
+    } catch (error) {
+
+        showMessage(
+            "Unable to connect to server.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// Message
+function showMessage(message, type) {
+
+    const messageBox =
+        document.getElementById("message");
+
+    messageBox.innerText = message;
+
+    messageBox.className = type;
+
+
+    setTimeout(function() {
+
+        messageBox.innerText = "";
+
+        messageBox.className = "";
+
+    }, 3000);
+
+}
+
+
+loadDoctors();
+
+</script>
+
+{% endblock %}

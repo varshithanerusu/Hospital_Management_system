@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Appointment Details{% endblock %}
+
+{% block content %}
+
+<div class="form-page">
+
+    <div class="form-box">
+
+        <h1>Appointment Details</h1>
+
+        <p>View complete appointment information.</p>
+
+
+        <!--
+            Store the appointment ID in HTML.
+            This avoids putting Jinja code directly inside JavaScript.
+        -->
+        <div
+            id="appointmentData"
+            data-appointment-id="{{ appointment_id }}"
+        ></div>
+
+
+        <!-- Appointment Details -->
+
+        <div class="patient-details">
+
+            <div class="detail-row">
+                <span class="detail-label">
+                    Appointment ID
+                </span>
+
+                <span id="appointmentId">
+                    Loading...
+                </span>
+            </div>
+
+
+            <div class="detail-row">
+                <span class="detail-label">
+                    Patient
+                </span>
+
+                <span id="patientName">
+                    Loading...
+                </span>
+            </div>
+
+
+            <div class="detail-row">
+                <span class="detail-label">
+                    Doctor
+                </span>
+
+                <span id="doctorName">
+                    Loading...
+                </span>
+            </div>
+
+
+            <div class="detail-row">
+                <span class="detail-label">
+                    Date
+                </span>
+
+                <span id="appointmentDate">
+                    Loading...
+                </span>
+            </div>
+
+
+            <div class="detail-row">
+                <span class="detail-label">
+                    Diagnosis
+                </span>
+
+                <span id="diagnosis">
+                    Loading...
+                </span>
+            </div>
+
+
+            <div class="detail-row">
+                <span class="detail-label">
+                    Status
+                </span>
+
+                <span id="status">
+                    Loading...
+                </span>
+            </div>
+
+        </div>
+
+
+        <!-- Message -->
+
+        <div id="message"></div>
+
+
+        <!-- Buttons -->
+
+        <div class="form-buttons">
+
+            <button
+                type="button"
+                onclick="editAppointment()"
+            >
+                Edit
+            </button>
+
+
+            <button
+                type="button"
+                class="cancel-button"
+                onclick="goBack()"
+            >
+                Back
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // -----------------------------------------
+    // Get Appointment ID
+    // -----------------------------------------
+
+    const appointmentData =
+        document.getElementById("appointmentData");
+
+    const appointmentId =
+        appointmentData.dataset.appointmentId;
+
+
+    // -----------------------------------------
+    // Get JWT token
+    // -----------------------------------------
+
+    const token =
+        localStorage.getItem("access_token");
+
+
+    // -----------------------------------------
+    // Check login
+    // -----------------------------------------
+
+    if (!token) {
+
+        window.location.href = "/login";
+
+    }
+
+
+    // -----------------------------------------
+    // Load Appointment
+    // -----------------------------------------
+
+    async function loadAppointment() {
+
+        try {
+
+            const response =
+                await fetch(
+                    "/appointments/" + appointmentId,
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "Authorization":
+                                "Bearer " + token
+                        }
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            console.log(
+                "Appointment response:",
+                result
+            );
+
+
+            // ---------------------------------
+            // Check response
+            // ---------------------------------
+
+            if (!response.ok) {
+
+                const message =
+                    document.getElementById("message");
+
+                message.className = "error";
+
+                message.textContent =
+                    result.message ||
+                    result.error ||
+                    "Unable to load appointment.";
+
+                return;
+            }
+
+
+            // ---------------------------------
+            // Get appointment data
+            // ---------------------------------
+
+            const appointment =
+                result.data || result;
+
+
+            // ---------------------------------
+            // Appointment ID
+            // ---------------------------------
+
+            document.getElementById(
+                "appointmentId"
+            ).textContent =
+                appointment.id;
+
+
+            // ---------------------------------
+            // Patient
+            // ---------------------------------
+
+            document.getElementById(
+                "patientName"
+            ).textContent =
+                appointment.patient_name ||
+                appointment.patient?.name ||
+                appointment.patient_id;
+
+
+            // ---------------------------------
+            // Doctor
+            // ---------------------------------
+
+            document.getElementById(
+                "doctorName"
+            ).textContent =
+                appointment.doctor_name ||
+                appointment.doctor?.name ||
+                appointment.doctor_id;
+
+
+            // ---------------------------------
+            // Date
+            // ---------------------------------
+
+            document.getElementById(
+                "appointmentDate"
+            ).textContent =
+                appointment.date;
+
+
+            // ---------------------------------
+            // Diagnosis
+            // ---------------------------------
+
+            document.getElementById(
+                "diagnosis"
+            ).textContent =
+                appointment.diagnosis;
+
+
+            // ---------------------------------
+            // Status
+            // ---------------------------------
+
+            document.getElementById(
+                "status"
+            ).textContent =
+                appointment.status;
+
+
+        } catch (error) {
+
+            console.error(
+                "Error loading appointment:",
+                error
+            );
+
+
+            const message =
+                document.getElementById("message");
+
+            message.className = "error";
+
+            message.textContent =
+                "Unable to connect to server.";
+
+        }
+
+    }
+
+
+    // -----------------------------------------
+    // Edit Appointment
+    // -----------------------------------------
+
+    function editAppointment() {
+
+        window.location.href =
+            "/appointments/" +
+            appointmentId +
+            "/edit";
+
+    }
+
+
+    // -----------------------------------------
+    // Back to Appointment List
+    // -----------------------------------------
+
+    function goBack() {
+
+        window.location.href =
+            "/appointments-page";
+
+    }
+
+
+    // -----------------------------------------
+    // Start
+    // -----------------------------------------
+
+    loadAppointment();
+
+</script>
+
+{% endblock %}

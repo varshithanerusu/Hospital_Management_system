@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Details{% endblock %}
+
+{% block content %}
+
+<div class="form-page">
+
+    <div class="form-box">
+
+        <h1>Doctor Details</h1>
+
+        <div class="patient-details">
+
+            <div class="detail-row">
+                <span class="detail-label">Doctor ID</span>
+                <span id="doctorId"></span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Name</span>
+                <span id="doctorName"></span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Specialization</span>
+                <span id="doctorSpecialization"></span>
+            </div>
+
+        </div>
+
+        <div id="message"></div>
+
+        <div class="form-buttons">
+
+            <button onclick="editDoctor()">
+                Edit Doctor
+            </button>
+
+            <button
+                class="cancel-button"
+                onclick="goBack()">
+                Back
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const token = localStorage.getItem("access_token");
+
+if (!token) {
+    window.location.href = "/login";
+}
+
+const doctorId =
+    window.location.pathname.split("/")[2];
+
+async function loadDoctor() {
+
+    try {
+
+        const response = await fetch(
+            "/doctors/" + doctorId,
+            {
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            document.getElementById("message")
+                .innerText =
+                data.message || "Doctor not found.";
+
+            return;
+        }
+
+        const doctor = data.data;
+
+        document.getElementById("doctorId")
+            .innerText = doctor.id;
+
+        document.getElementById("doctorName")
+            .innerText = doctor.name;
+
+        document.getElementById("doctorSpecialization")
+            .innerText = doctor.specialization;
+
+    } catch (error) {
+
+        document.getElementById("message")
+            .innerText =
+            "Unable to connect to server.";
+
+    }
+
+}
+
+function editDoctor() {
+
+    window.location.href =
+        "/doctors/" + doctorId + "/edit";
+
+}
+
+function goBack() {
+
+    window.location.href =
+        "/doctors-page";
+
+}
+
+loadDoctor();
+
+</script>
+
+{% endblock %}

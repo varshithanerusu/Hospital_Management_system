@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Doctor{% endblock %}
+
+{% block content %}
+
+<div class="form-page">
+
+    <div class="form-box">
+
+        <h1>Edit Doctor</h1>
+
+        <form id="doctorForm">
+
+            <div class="form-group">
+
+                <label>Name</label>
+
+                <input
+                    type="text"
+                    id="name"
+                    required
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Specialization</label>
+
+                <input
+                    type="text"
+                    id="specialization"
+                    required
+                >
+
+            </div>
+
+            <div id="message"></div>
+
+            <div class="form-buttons">
+
+                <button type="submit">
+                    Update Doctor
+                </button>
+
+                <button
+                    type="button"
+                    class="cancel-button"
+                    onclick="goBack()">
+                    Cancel
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+const token = localStorage.getItem("access_token");
+
+if (!token) {
+    window.location.href = "/login";
+}
+
+const doctorId =
+    window.location.pathname.split("/")[2];
+
+
+// Load existing doctor
+async function loadDoctor() {
+
+    try {
+
+        const response = await fetch(
+            "/doctors/" + doctorId,
+            {
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            showMessage(
+                data.message || "Doctor not found.",
+                "error"
+            );
+
+            return;
+        }
+
+        const doctor = data.data;
+
+        document.getElementById("name").value =
+            doctor.name;
+
+        document.getElementById(
+            "specialization"
+        ).value =
+            doctor.specialization;
+
+    } catch (error) {
+
+        showMessage(
+            "Unable to connect to server.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// Update doctor
+document.getElementById("doctorForm")
+.addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const name =
+        document.getElementById("name")
+        .value.trim();
+
+    const specialization =
+        document.getElementById("specialization")
+        .value.trim();
+
+    if (!name || !specialization) {
+
+        showMessage(
+            "Please fill all fields.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            "/doctors/" + doctorId,
+            {
+                method: "PUT",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization":
+                        "Bearer " + token
+                },
+
+                body: JSON.stringify({
+                    name: name,
+                    specialization: specialization
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+
+            showMessage(
+                "Doctor updated successfully!",
+                "success"
+            );
+
+            setTimeout(function() {
+
+                window.location.href =
+                    "/doctors-page";
+
+            }, 800);
+
+        } else {
+
+            showMessage(
+                data.message ||
+                "Unable to update doctor.",
+                "error"
+            );
+
+        }
+
+    } catch (error) {
+
+        showMessage(
+            "Unable to connect to server.",
+            "error"
+        );
+
+    }
+
+});
+
+
+function goBack() {
+
+    window.location.href =
+        "/doctors-page";
+
+}
+
+
+function showMessage(message, type) {
+
+    const box =
+        document.getElementById("message");
+
+    box.innerText = message;
+    box.className = type;
+
+}
+
+
+loadDoctor();
+
+</script>
+
+{% endblock %}

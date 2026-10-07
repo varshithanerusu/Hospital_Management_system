@@ -1,0 +1,678 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Appointment{% endblock %}
+
+{% block content %}
+
+<div class="form-page">
+
+    <div class="form-box">
+
+        <h1>Edit Appointment</h1>
+
+        <p>Update appointment information.</p>
+
+        <!-- Store appointment ID -->
+        <div
+            id="appointmentData"
+            data-appointment-id="{{ appointment_id }}"
+        ></div>
+
+
+        <form id="appointmentForm">
+
+            <!-- Patient -->
+            <div class="form-group">
+
+                <label for="patient_id">
+                    Patient
+                </label>
+
+                <select
+                    id="patient_id"
+                    required
+                >
+                    <option value="">
+                        Select Patient
+                    </option>
+                </select>
+
+            </div>
+
+
+            <!-- Doctor -->
+            <div class="form-group">
+
+                <label for="doctor_id">
+                    Doctor
+                </label>
+
+                <select
+                    id="doctor_id"
+                    required
+                >
+                    <option value="">
+                        Select Doctor
+                    </option>
+                </select>
+
+            </div>
+
+
+            <!-- Date -->
+            <div class="form-group">
+
+                <label for="date">
+                    Date
+                </label>
+
+                <input
+                    type="datetime-local"
+                    id="date"
+                    required
+                >
+
+            </div>
+
+
+            <!-- Diagnosis -->
+            <div class="form-group">
+
+                <label for="diagnosis">
+                    Diagnosis
+                </label>
+
+                <input
+                    type="text"
+                    id="diagnosis"
+                    placeholder="Enter diagnosis"
+                    required
+                >
+
+            </div>
+
+
+            <!-- Status -->
+            <div class="form-group">
+
+                <label for="status">
+                    Status
+                </label>
+
+                <select
+                    id="status"
+                    required
+                >
+
+                    <option value="Under Treatment">
+                        Under Treatment
+                    </option>
+
+                    <option value="Recovered">
+                        Recovered
+                    </option>
+
+                    <option value="Critical">
+                        Critical
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- Message -->
+            <div id="message"></div>
+
+
+            <!-- Buttons -->
+            <div class="form-buttons">
+
+                <button type="submit">
+                    Update Appointment
+                </button>
+
+                <button
+                    type="button"
+                    class="cancel-button"
+                    onclick="goBack()"
+                >
+                    Cancel
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // -----------------------------------------
+    // Get Appointment ID
+    // -----------------------------------------
+
+    const appointmentData =
+        document.getElementById("appointmentData");
+
+    const appointmentId =
+        appointmentData.dataset.appointmentId;
+
+
+    // -----------------------------------------
+    // Get JWT token
+    // -----------------------------------------
+
+    const token =
+        localStorage.getItem("access_token");
+
+
+    // -----------------------------------------
+    // Get user role
+    // -----------------------------------------
+
+    const role =
+        localStorage.getItem("role");
+
+
+    // -----------------------------------------
+    // Check login
+    // -----------------------------------------
+
+    if (!token) {
+
+        window.location.href = "/login";
+
+    }
+
+
+    // -----------------------------------------
+    // HTML elements
+    // -----------------------------------------
+
+    const patientSelect =
+        document.getElementById("patient_id");
+
+    const doctorSelect =
+        document.getElementById("doctor_id");
+
+    const dateInput =
+        document.getElementById("date");
+
+    const diagnosisInput =
+        document.getElementById("diagnosis");
+
+    const statusSelect =
+        document.getElementById("status");
+
+    const message =
+        document.getElementById("message");
+
+
+    // -----------------------------------------
+    // Load patients
+    // -----------------------------------------
+
+    async function loadPatients() {
+
+        const response =
+            await fetch("/patients", {
+
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+
+            });
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "Patients:",
+            result
+        );
+
+
+        const patients =
+            Array.isArray(result)
+                ? result
+                : result.data || [];
+
+
+        patientSelect.innerHTML =
+            '<option value="">Select Patient</option>';
+
+
+        patients.forEach(function(patient) {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                patient.id;
+
+            option.textContent =
+                patient.name +
+                " - Age " +
+                patient.age;
+
+            patientSelect.appendChild(option);
+
+        });
+
+    }
+
+
+    // -----------------------------------------
+    // Load doctors
+    // -----------------------------------------
+
+    async function loadDoctors() {
+
+        const response =
+            await fetch("/doctors", {
+
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+
+            });
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "Doctors:",
+            result
+        );
+
+
+        const doctors =
+            Array.isArray(result)
+                ? result
+                : result.data || [];
+
+
+        doctorSelect.innerHTML =
+            '<option value="">Select Doctor</option>';
+
+
+        doctors.forEach(function(doctor) {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                doctor.id;
+
+            option.textContent =
+                doctor.name +
+                " - " +
+                doctor.specialization;
+
+            doctorSelect.appendChild(option);
+
+        });
+
+    }
+
+
+    // -----------------------------------------
+    // Load existing appointment
+    // -----------------------------------------
+
+    async function loadAppointment() {
+
+        try {
+
+            const response =
+                await fetch(
+                    "/appointments/" + appointmentId,
+                    {
+                        headers: {
+                            "Authorization":
+                                "Bearer " + token
+                        }
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            console.log(
+                "Appointment:",
+                result
+            );
+
+
+            if (!response.ok) {
+
+                message.className = "error";
+
+                message.textContent =
+                    result.message ||
+                    result.error ||
+                    "Unable to load appointment.";
+
+                return;
+
+            }
+
+
+            const appointment =
+                result.data || result;
+
+
+            // Patient
+            patientSelect.value =
+                appointment.patient_id;
+
+
+            // Doctor
+            doctorSelect.value =
+                appointment.doctor_id;
+
+
+            // Diagnosis
+            diagnosisInput.value =
+                appointment.diagnosis;
+
+
+            // Status
+            statusSelect.value =
+                appointment.status;
+
+
+            // Date
+            if (appointment.date) {
+
+                let dateValue =
+                    appointment.date;
+
+                dateValue =
+                    dateValue.replace(" ", "T");
+
+                dateValue =
+                    dateValue.substring(0, 16);
+
+                dateInput.value =
+                    dateValue;
+
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                error
+            );
+
+            message.className = "error";
+
+            message.textContent =
+                "Unable to load appointment.";
+
+        }
+
+    }
+
+
+    // -----------------------------------------
+    // Update appointment
+    // -----------------------------------------
+
+    document
+        .getElementById("appointmentForm")
+        .addEventListener(
+            "submit",
+            async function(event) {
+
+                event.preventDefault();
+
+
+                message.textContent = "";
+
+                message.className = "";
+
+
+                // Get values
+
+                const patientId =
+                    patientSelect.value;
+
+                const doctorId =
+                    doctorSelect.value;
+
+                const dateValue =
+                    dateInput.value;
+
+                const diagnosis =
+                    diagnosisInput.value.trim();
+
+                const status =
+                    statusSelect.value;
+
+
+                // Validate
+
+                if (!patientId) {
+
+                    message.className =
+                        "error";
+
+                    message.textContent =
+                        "Please select a patient.";
+
+                    return;
+
+                }
+
+
+                if (!doctorId) {
+
+                    message.className =
+                        "error";
+
+                    message.textContent =
+                        "Please select a doctor.";
+
+                    return;
+
+                }
+
+
+                if (!dateValue) {
+
+                    message.className =
+                        "error";
+
+                    message.textContent =
+                        "Please select a date.";
+
+                    return;
+
+                }
+
+
+                if (!diagnosis) {
+
+                    message.className =
+                        "error";
+
+                    message.textContent =
+                        "Please enter diagnosis.";
+
+                    return;
+
+                }
+
+
+                // Convert date
+
+                const formattedDate =
+                    dateValue.replace(
+                        "T",
+                        " "
+                    ) + ":00";
+
+
+                // Request data
+
+                const appointmentData = {
+
+                    patient_id:
+                        parseInt(patientId),
+
+                    doctor_id:
+                        parseInt(doctorId),
+
+                    date:
+                        formattedDate,
+
+                    diagnosis:
+                        diagnosis,
+
+                    status:
+                        status
+
+                };
+
+
+                console.log(
+                    "Updating:",
+                    appointmentData
+                );
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/appointments/" +
+                            appointmentId,
+                            {
+
+                                method: "PUT",
+
+                                headers: {
+
+                                    "Content-Type":
+                                        "application/json",
+
+                                    "Authorization":
+                                        "Bearer " + token
+
+                                },
+
+                                body:
+                                    JSON.stringify(
+                                        appointmentData
+                                    )
+
+                            }
+                        );
+
+
+                    const result =
+                        await response.json();
+
+
+                    console.log(
+                        "Update response:",
+                        result
+                    );
+
+
+                    if (response.ok) {
+
+                        message.className =
+                            "success";
+
+                        message.textContent =
+                            "Appointment updated successfully!";
+
+
+                        setTimeout(
+                            function() {
+
+                                window.location.href =
+                                    "/appointments-page";
+
+                            },
+                            1000
+                        );
+
+                    } else {
+
+                        message.className =
+                            "error";
+
+                        message.textContent =
+                            result.message ||
+                            result.error ||
+                            "Unable to update appointment.";
+
+                    }
+
+
+                } catch (error) {
+
+                    console.error(
+                        error
+                    );
+
+                    message.className =
+                        "error";
+
+                    message.textContent =
+                        "Server connection error.";
+
+                }
+
+            }
+        );
+
+
+    // -----------------------------------------
+    // Back
+    // -----------------------------------------
+
+    function goBack() {
+
+        window.location.href =
+            "/appointments-page";
+
+    }
+
+
+    // -----------------------------------------
+    // Start loading
+    // -----------------------------------------
+
+    async function initialize() {
+
+        await loadPatients();
+
+        await loadDoctors();
+
+        await loadAppointment();
+
+    }
+
+
+    initialize();
+
+</script>
+
+{% endblock %}

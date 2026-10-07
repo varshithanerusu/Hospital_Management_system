@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}
+Patient Details - Hospital Management System
+{% endblock %}
+
+{% block content %}
+
+<div class="form-page">
+
+    <div class="form-box">
+
+        <h1>Patient Details</h1>
+
+        <div class="patient-details">
+
+            <div class="detail-row">
+                <span class="detail-label">Patient ID</span>
+                <span id="patientId"></span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Name</span>
+                <span id="patientName"></span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Age</span>
+                <span id="patientAge"></span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Gender</span>
+                <span id="patientGender"></span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Contact</span>
+                <span id="patientContact"></span>
+            </div>
+
+        </div>
+
+        <div id="message"></div>
+
+        <div class="form-buttons">
+
+            <button
+                type="button"
+                onclick="editPatient()">
+                Edit Patient
+            </button>
+
+            <button
+                type="button"
+                class="cancel-button"
+                onclick="goBack()">
+                Back to Patients
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const token =
+    localStorage.getItem("access_token");
+
+
+// Check login
+if (!token) {
+
+    window.location.href = "/login";
+
+}
+
+
+// Get patient ID from URL
+const patientId =
+    window.location.pathname.split("/")[2];
+
+
+// Load patient
+async function loadPatient() {
+
+    try {
+
+        const response = await fetch(
+            "/patients/" + patientId,
+            {
+                method: "GET",
+
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            document.getElementById(
+                "message"
+            ).innerText =
+                data.message ||
+                "Patient not found.";
+
+            return;
+
+        }
+
+
+        const patient = data.data;
+
+
+        document.getElementById(
+            "patientId"
+        ).innerText = patient.id;
+
+
+        document.getElementById(
+            "patientName"
+        ).innerText = patient.name;
+
+
+        document.getElementById(
+            "patientAge"
+        ).innerText = patient.age;
+
+
+        document.getElementById(
+            "patientGender"
+        ).innerText = patient.gender;
+
+
+        document.getElementById(
+            "patientContact"
+        ).innerText = patient.contact;
+
+
+    } catch (error) {
+
+        document.getElementById(
+            "message"
+        ).innerText =
+            "Unable to connect to server.";
+
+    }
+
+}
+
+
+// Edit patient
+function editPatient() {
+
+    window.location.href =
+        "/patients/" +
+        patientId +
+        "/edit";
+
+}
+
+
+// Back
+function goBack() {
+
+    window.location.href =
+        "/patients-page";
+
+}
+
+
+// Load patient when page opens
+loadPatient();
+
+</script>
+
+{% endblock %}

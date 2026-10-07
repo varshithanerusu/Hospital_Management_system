@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MediCare HMS - Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="dashboard-body">
+
+<div class="dashboard-layout">
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">✚</div>
+
+            <div>
+                <div class="brand-name">MediCare</div>
+                <div class="brand-subtitle">Hospital Management</div>
+            </div>
+        </div>
+
+        <div class="sidebar-section-title">
+            MAIN MENU
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="/dashboard" class="sidebar-link active">
+                <span class="sidebar-icon">▣</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="/patients-page" class="sidebar-link">
+                <span class="sidebar-icon">♙</span>
+                <span>Patients</span>
+            </a>
+
+            <a href="/doctors-page" class="sidebar-link">
+                <span class="sidebar-icon">♧</span>
+                <span>Doctors</span>
+            </a>
+
+            <a href="/appointments-page" class="sidebar-link">
+                <span class="sidebar-icon">▣</span>
+                <span>Appointments</span>
+            </a>
+
+            <a href="/analytics-page" class="sidebar-link">
+                <span class="sidebar-icon">◫</span>
+                <span>Analytics</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-section-title data-title">
+            DATA MANAGEMENT
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="/csv-upload-page" class="sidebar-link">
+                <span class="sidebar-icon">↑</span>
+                <span>Upload CSV</span>
+            </a>
+
+            <a href="#" class="sidebar-link"
+               onclick="exportFile('/api/export-csv',
+                                   'hospital_appointments.csv');
+                        return false;">
+                <span class="sidebar-icon">↓</span>
+                <span>Export CSV</span>
+            </a>
+
+            <a href="#" class="sidebar-link"
+               onclick="exportFile('/api/export-excel',
+                                   'hospital_appointments.xlsx');
+                        return false;">
+                <span class="sidebar-icon">▤</span>
+                <span>Export Excel</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="sidebar-user">
+
+                <div class="user-avatar" id="sidebarAvatar">
+                    A
+                </div>
+
+                <div class="user-details">
+
+                    <strong id="sidebarUsername">
+                        Admin
+                    </strong>
+
+                    <span id="sidebarRole">
+                        Administrator
+                    </span>
+
+                </div>
+
+            </div>
+
+            <button class="sidebar-logout" onclick="logout()">
+                <span>↪</span>
+                Logout
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN CONTENT ================= -->
+
+    <main class="dashboard-main">
+
+        <!-- TOP HEADER -->
+
+        <header class="dashboard-header">
+
+            <div>
+
+                <div class="page-breadcrumb">
+                    Hospital Management / Dashboard
+                </div>
+
+                <h1>Dashboard</h1>
+
+            </div>
+
+            <div class="header-user">
+
+                <div class="header-user-text">
+
+                    <strong id="headerUsername">
+                        Admin
+                    </strong>
+
+                    <span id="headerRole">
+                        Administrator
+                    </span>
+
+                </div>
+
+                <div class="header-avatar" id="headerAvatar">
+                    A
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ================= WELCOME ================= -->
+
+        <section class="dashboard-welcome">
+
+            <div>
+
+                <h2>
+                    Good morning, <span id="welcomeUsername">Admin</span> 👋
+                </h2>
+
+                <p>
+                    Here's what's happening in your hospital today.
+                </p>
+
+            </div>
+
+            <a href="/appointments/new" class="primary-action">
+                <span>+</span>
+                New Appointment
+            </a>
+
+        </section>
+
+
+        <!-- ================= STATISTICS ================= -->
+
+        <section class="stats-grid">
+
+            <div class="stat-card">
+
+                <div class="stat-card-top">
+
+                    <div>
+                        <span class="stat-label">
+                            Total Patients
+                        </span>
+
+                        <div class="stat-value"
+                             id="totalPatients">
+                            —
+                        </div>
+                    </div>
+
+                    <div class="stat-icon blue">
+                        ♙
+                    </div>
+
+                </div>
+
+                <div class="stat-footer">
+                    Registered patients
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-card-top">
+
+                    <div>
+                        <span class="stat-label">
+                            Total Doctors
+                        </span>
+
+                        <div class="stat-value"
+                             id="totalDoctors">
+                            —
+                        </div>
+                    </div>
+
+                    <div class="stat-icon green">
+                        ♧
+                    </div>
+
+                </div>
+
+                <div class="stat-footer">
+                    Medical professionals
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-card-top">
+
+                    <div>
+                        <span class="stat-label">
+                            Appointments
+                        </span>
+
+                        <div class="stat-value"
+                             id="totalAppointments">
+                            —
+                        </div>
+                    </div>
+
+                    <div class="stat-icon purple">
+                        ▣
+                    </div>
+
+                </div>
+
+                <div class="stat-footer">
+                    Total appointments
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-card-top">
+
+                    <div>
+                        <span class="stat-label">
+                            Avg. Recovery
+                        </span>
+
+                        <div class="stat-value"
+                             id="averageRecovery">
+                            —
+                        </div>
+                    </div>
+
+                    <div class="stat-icon orange">
+                        ♡
+                    </div>
+
+                </div>
+
+                <div class="stat-footer">
+                    Average recovery time
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= ANALYTICS PREVIEW ================= -->
+
+        <section class="dashboard-content-grid">
+
+            <div class="dashboard-panel chart-panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h3>Appointment Overview</h3>
+                        <p>Appointments recorded over time</p>
+                    </div>
+
+                    <a href="/analytics-page">
+                        View Analytics →
+                    </a>
+
+                </div>
+
+                <div class="chart-wrapper">
+                    <canvas id="appointmentChart"></canvas>
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h3>Treatment Status</h3>
+                        <p>Current appointment distribution</p>
+                    </div>
+
+                </div>
+
+                <div class="status-list">
+
+                    <div class="status-row">
+
+                        <div class="status-name">
+                            <span class="status-dot recovered"></span>
+                            Recovered
+                        </div>
+
+                        <strong id="recoveredCount">
+                            0
+                        </strong>
+
+                    </div>
+
+                    <div class="status-progress">
+                        <div class="progress recovered-progress"
+                             id="recoveredProgress">
+                        </div>
+                    </div>
+
+
+                    <div class="status-row">
+
+                        <div class="status-name">
+                            <span class="status-dot treatment"></span>
+                            Under Treatment
+                        </div>
+
+                        <strong id="treatmentCount">
+                            0
+                        </strong>
+
+                    </div>
+
+                    <div class="status-progress">
+                        <div class="progress treatment-progress"
+                             id="treatmentProgress">
+                        </div>
+                    </div>
+
+
+                    <div class="status-row">
+
+                        <div class="status-name">
+                            <span class="status-dot critical"></span>
+                            Critical
+                        </div>
+
+                        <strong id="criticalCount">
+                            0
+                        </strong>
+
+                    </div>
+
+                    <div class="status-progress">
+                        <div class="progress critical-progress"
+                             id="criticalProgress">
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= QUICK ACTIONS ================= -->
+
+        <section class="quick-actions">
+
+            <div class="section-heading">
+
+                <div>
+                    <h2>Quick Actions</h2>
+                    <p>Frequently used hospital operations</p>
+                </div>
+
+            </div>
+
+
+            <div class="quick-action-grid">
+
+                <a href="/patients-page"
+                   class="quick-action-card">
+
+                    <div class="quick-action-icon blue">
+                        ♙
+                    </div>
+
+                    <div>
+                        <strong>Manage Patients</strong>
+                        <span>View and manage patient records</span>
+                    </div>
+
+                    <span class="arrow">→</span>
+
+                </a>
+
+
+                <a href="/doctors-page"
+                   class="quick-action-card">
+
+                    <div class="quick-action-icon green">
+                        ♧
+                    </div>
+
+                    <div>
+                        <strong>Manage Doctors</strong>
+                        <span>Manage doctors and specializations</span>
+                    </div>
+
+                    <span class="arrow">→</span>
+
+                </a>
+
+
+                <a href="/appointments-page"
+                   class="quick-action-card">
+
+                    <div class="quick-action-icon purple">
+                        ▣
+                    </div>
+
+                    <div>
+                        <strong>Appointments</strong>
+                        <span>Schedule and manage appointments</span>
+                    </div>
+
+                    <span class="arrow">→</span>
+
+                </a>
+
+
+                <a href="/analytics-page"
+                   class="quick-action-card">
+
+                    <div class="quick-action-icon orange">
+                        ◫
+                    </div>
+
+                    <div>
+                        <strong>View Analytics</strong>
+                        <span>Explore hospital performance data</span>
+                    </div>
+
+                    <span class="arrow">→</span>
+
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= RECENT APPOINTMENTS ================= -->
+
+        <section class="dashboard-panel recent-panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <h3>Recent Appointments</h3>
+                    <p>Latest scheduled appointments</p>
+                </div>
+
+                <a href="/appointments-page">
+                    View All →
+                </a>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table class="professional-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Diagnosis</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="recentAppointments">
+
+                        <tr>
+                            <td colspan="5"
+                                class="table-loading">
+                                Loading appointments...
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <footer class="dashboard-footer">
+
+            <span>
+                © 2026 MediCare HMS
+            </span>
+
+            <span>
+                Hospital Patient Record & Treatment Tracking System
+            </span>
+
+        </footer>
+
+    </main>
+
+</div>
+
+
+<!-- ================= CHART.JS ================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<script>
+
+const token = localStorage.getItem("access_token");
+const username = localStorage.getItem("username");
+const role = localStorage.getItem("role");
+
+
+// ========================================
+// LOGIN CHECK
+// ========================================
+
+if (!token) {
+
+    window.location.href = "/login";
+
+}
+
+
+// ========================================
+// USER INFORMATION
+// ========================================
+
+const displayUsername = username || "Admin";
+
+document.getElementById("welcomeUsername").textContent =
+    displayUsername;
+
+document.getElementById("headerUsername").textContent =
+    displayUsername;
+
+document.getElementById("sidebarUsername").textContent =
+    displayUsername;
+
+document.getElementById("headerRole").textContent =
+    role === "admin" ? "Administrator" : "Doctor";
+
+document.getElementById("sidebarRole").textContent =
+    role === "admin" ? "Administrator" : "Doctor";
+
+document.getElementById("headerAvatar").textContent =
+    displayUsername.charAt(0).toUpperCase();
+
+document.getElementById("sidebarAvatar").textContent =
+    displayUsername.charAt(0).toUpperCase();
+
+
+// ========================================
+// LOAD ANALYTICS
+// ========================================
+
+async function loadDashboardData() {
+
+    try {
+
+        const response = await fetch("/analytics", {
+
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+
+        });
+
+        if (!response.ok) {
+
+            console.error(
+                "Analytics request failed:",
+                response.status
+            );
+
+            return;
+
+        }
+
+        const result = await response.json();
+
+        if (result.status !== "success") {
+            return;
+        }
+
+        const data = result.data;
+
+
+        // Statistics
+
+        document.getElementById("totalPatients")
+            .textContent = data.total_patients;
+
+        document.getElementById("totalDoctors")
+            .textContent = data.total_doctors;
+
+        document.getElementById("totalAppointments")
+            .textContent = data.total_appointments;
+
+        document.getElementById("averageRecovery")
+            .textContent =
+            data.average_recovery_time_days + " days";
+
+
+        // Status
+
+        const status =
+            data.status_distribution || {};
+
+        const recovered =
+            status["Recovered"] || 0;
+
+        const treatment =
+            status["Under Treatment"] || 0;
+
+        const critical =
+            status["Critical"] || 0;
+
+
+        document.getElementById("recoveredCount")
+            .textContent = recovered;
+
+        document.getElementById("treatmentCount")
+            .textContent = treatment;
+
+        document.getElementById("criticalCount")
+            .textContent = critical;
+
+
+        const total =
+            recovered + treatment + critical;
+
+
+        if (total > 0) {
+
+            document.getElementById("recoveredProgress")
+                .style.width =
+                ((recovered / total) * 100) + "%";
+
+            document.getElementById("treatmentProgress")
+                .style.width =
+                ((treatment / total) * 100) + "%";
+
+            document.getElementById("criticalProgress")
+                .style.width =
+                ((critical / total) * 100) + "%";
+
+        }
+
+
+        // Appointment chart
+
+        createAppointmentChart(
+            data.time_series || {}
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Dashboard error:",
+            error
+        );
+
+    }
+
+}
+
+
+// ========================================
+// APPOINTMENTS
+// ========================================
+
+async function loadAppointments() {
+
+    try {
+
+        const response = await fetch(
+            "/appointments",
+            {
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+        if (!response.ok) {
+            return;
+        }
+
+        const result =
+            await response.json();
+
+        const appointments =
+            result.data || [];
+
+        const tbody =
+            document.getElementById(
+                "recentAppointments"
+            );
+
+        if (!appointments.length) {
+
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5"
+                        class="table-empty">
+                        No appointments available.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        const recent =
+            appointments
+                .slice(-5)
+                .reverse();
+
+
+        tbody.innerHTML =
+            recent.map(appointment => {
+
+                const patientName =
+                    appointment.patient_name ||
+                    appointment.patient?.name ||
+                    "Patient #" +
+                    appointment.patient_id;
+
+                const doctorName =
+                    appointment.doctor_name ||
+                    appointment.doctor?.name ||
+                    "Doctor #" +
+                    appointment.doctor_id;
+
+                const date =
+                    appointment.date || "-";
+
+                const status =
+                    appointment.status || "-";
+
+                let statusClass =
+                    "status-treatment";
+
+                if (status === "Recovered") {
+                    statusClass =
+                        "status-recovered";
+                }
+
+                if (status === "Critical") {
+                    statusClass =
+                        "status-critical";
+                }
+
+                return `
+
+                    <tr>
+
+                        <td>
+                            <div class="patient-cell">
+
+                                <div class="mini-avatar">
+                                    ${patientName
+                                        .charAt(0)
+                                        .toUpperCase()}
+                                </div>
+
+                                <strong>
+                                    ${patientName}
+                                </strong>
+
+                            </div>
+                        </td>
+
+                        <td>
+                            ${doctorName}
+                        </td>
+
+                        <td>
+                            ${appointment.diagnosis || "-"}
+                        </td>
+
+                        <td>
+                            ${date}
+                        </td>
+
+                        <td>
+
+                            <span class="
+                                table-status
+                                ${statusClass}
+                            ">
+                                ${status}
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }).join("");
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Appointments error:",
+            error
+        );
+
+    }
+
+}
+
+
+// ========================================
+// CHART
+// ========================================
+
+let appointmentChart = null;
+
+function createAppointmentChart(timeSeries) {
+
+    const canvas =
+        document.getElementById(
+            "appointmentChart"
+        );
+
+    if (!canvas) {
+        return;
+    }
+
+
+    const labels =
+        Object.keys(timeSeries);
+
+    const values =
+        Object.values(timeSeries);
+
+
+    if (appointmentChart) {
+        appointmentChart.destroy();
+    }
+
+
+    appointmentChart =
+        new Chart(canvas, {
+
+            type: "line",
+
+            data: {
+
+                labels: labels,
+
+                datasets: [{
+
+                    label: "Appointments",
+
+                    data: values,
+
+                    borderWidth: 2,
+
+                    tension: 0.4,
+
+                    fill: true
+
+                }]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+                        display: false
+                    }
+
+                },
+
+                scales: {
+
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+
+                }
+
+            }
+
+        });
+
+}
+
+
+// ========================================
+// EXPORT
+// ========================================
+
+async function exportFile(url, filename) {
+
+    try {
+
+        const response =
+            await fetch(url, {
+
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+
+            });
+
+
+        if (!response.ok) {
+
+            alert(
+                "Unable to export file."
+            );
+
+            return;
+        }
+
+
+        const blob =
+            await response.blob();
+
+
+        const downloadUrl =
+            window.URL.createObjectURL(blob);
+
+
+        const link =
+            document.createElement("a");
+
+        link.href = downloadUrl;
+
+        link.download = filename;
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        link.remove();
+
+        window.URL.revokeObjectURL(
+            downloadUrl
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to connect to server."
+        );
+
+    }
+
+}
+
+
+// ========================================
+// LOGOUT
+// ========================================
+
+function logout() {
+
+    localStorage.removeItem(
+        "access_token"
+    );
+
+    localStorage.removeItem(
+        "username"
+    );
+
+    localStorage.removeItem(
+        "role"
+    );
+
+    window.location.href =
+        "/login";
+
+}
+
+
+// ========================================
+// LOAD DATA
+// ========================================
+
+loadDashboardData();
+
+loadAppointments();
+
+</script>
+
+</body>
+
+</html>

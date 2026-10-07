@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}
+Appointments - Hospital Management System
+{% endblock %}
+
+{% block content %}
+
+<div class="patients-page">
+
+    <div class="page-header">
+
+        <div>
+            <h1>Appointments</h1>
+            <p>Manage patient appointments and treatments</p>
+        </div>
+
+        <button onclick="addAppointment()">
+            + Add Appointment
+        </button>
+
+    </div>
+
+    <div id="message"></div>
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>ID</th>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Date</th>
+                    <th>Diagnosis</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+
+            </thead>
+
+            <tbody id="appointmentsTableBody">
+
+                <tr>
+                    <td colspan="7">
+                        Loading appointments...
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const token =
+    localStorage.getItem("access_token");
+
+const role =
+    localStorage.getItem("role");
+
+if (!token) {
+    window.location.href = "/login";
+}
+
+
+// Load appointments
+async function loadAppointments() {
+
+    try {
+
+        const response = await fetch(
+            "/appointments",
+            {
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+        const data =
+            await response.json();
+
+        if (!response.ok) {
+
+            showMessage(
+                data.message ||
+                "Unable to load appointments.",
+                "error"
+            );
+
+            return;
+        }
+
+        const appointments = data.data;
+
+        const tableBody =
+            document.getElementById(
+                "appointmentsTableBody"
+            );
+
+        tableBody.innerHTML = "";
+
+
+        if (appointments.length === 0) {
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7">
+                        No appointments found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        appointments.forEach(function(appointment) {
+
+            const row =
+                document.createElement("tr");
+
+
+            row.innerHTML = `
+
+                <td>${appointment.id}</td>
+
+                <td>${appointment.patient_name}</td>
+
+                <td>${appointment.doctor_name}</td>
+
+                <td>${appointment.date}</td>
+
+                <td>${appointment.diagnosis}</td>
+
+                <td>${appointment.status}</td>
+
+                <td>
+
+                    <button
+                        class="view-button"
+                        onclick="viewAppointment(${appointment.id})">
+                        View
+                    </button>
+
+                    <button
+                        class="edit-button"
+                        onclick="editAppointment(${appointment.id})">
+                        Edit
+                    </button>
+
+                    ${
+                        role === "admin"
+                        ?
+                        `
+                        <button
+                            class="delete-button"
+                            onclick="deleteAppointment(${appointment.id})">
+                            Delete
+                        </button>
+                        `
+                        :
+                        ""
+                    }
+
+                </td>
+
+            `;
+
+            tableBody.appendChild(row);
+
+        });
+
+    } catch (error) {
+
+        showMessage(
+            "Unable to connect to server.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// Add
+function addAppointment() {
+
+    if (role !== "admin") {
+
+        showMessage(
+            "Only admin can create appointments.",
+            "error"
+        );
+
+        return;
+    }
+
+    window.location.href =
+        "/appointments/new";
+
+}
+
+
+// View
+function viewAppointment(id) {
+
+    window.location.href =
+        "/appointments/" + id + "/view";
+
+}
+
+
+// Edit
+function editAppointment(id) {
+
+    window.location.href =
+        "/appointments/" + id + "/edit";
+
+}
+
+
+// Delete
+async function deleteAppointment(id) {
+
+    const confirmed = confirm(
+        "Are you sure you want to delete this appointment?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const response = await fetch(
+            "/appointments/" + id,
+            {
+                method: "DELETE",
+
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        if (response.ok) {
+
+            showMessage(
+                "Appointment deleted successfully.",
+                "success"
+            );
+
+            loadAppointments();
+
+        } else {
+
+            showMessage(
+                data.message ||
+                "Unable to delete appointment.",
+                "error"
+            );
+
+        }
+
+    } catch (error) {
+
+        showMessage(
+            "Unable to connect to server.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// Message
+function showMessage(message, type) {
+
+    const box =
+        document.getElementById("message");
+
+    box.innerText = message;
+    box.className = type;
+
+    setTimeout(function() {
+
+        box.innerText = "";
+        box.className = "";
+
+    }, 3000);
+
+}
+
+
+loadAppointments();
+
+</script>
+
+{% endblock %}
